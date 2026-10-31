@@ -464,6 +464,11 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         return e.ambient;
     }
 
+    String pkgAt(int position) {
+        if (position < 0 || position >= items.size()) return null;
+        return items.get(position).pkg;
+    }
+
     private static int vividColor(Drawable live) {
         if (live == null) return 0xFF444444;
         // Draw a private copy: changing the bounds of the drawable an ImageView shows would blank the tile.

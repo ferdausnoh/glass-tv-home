@@ -258,6 +258,36 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private Config config;
     /** Pictures of places are on (see PlaceWallpapers); they are dimmed behind the tiles. */
     private boolean placesMode;
+    // Per-app wallpaper: appwall/<package>.jpg replaces the rotation
+    // while that app is focused.
+    private boolean appWallActive;
+    private String appWallPkg;
+
+    private void applyAppWallpaper(final String pkg) {
+        if (pkg == null || pkg.equals(appWallPkg)) return;
+        appWallPkg = pkg;
+        java.io.File dir = getExternalFilesDir("appwall");
+        final java.io.File file = dir == null ? null : new java.io.File(dir, pkg + ".jpg");
+        if (file == null || !file.isFile()) {
+            if (appWallActive) {
+                appWallActive = false;
+                showNextWallpaper(true);
+            }
+            return;
+        }
+        appWallActive = true;
+        wallDecoder.execute(() -> {
+            final android.graphics.Bitmap bmp = decodeWallpaper(file);
+            if (bmp == null) return;
+            android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+            final android.graphics.Bitmap blur = Backdrop.blur(bmp, dm.widthPixels, dm.heightPixels, placesMode ? 0xFF7A7A7A : 0);
+            handler.post(() -> {
+                if (isDestroyed() || !appWallActive || !pkg.equals(appWallPkg)) return;
+                setWallpaper(bmp, true, blur);
+            });
+        });
+    }
+
     private volatile boolean placesRefreshRunning;
     private static final long SCREENSAVER_TIMEOUT_MS = 10L * 60 * 1000L; // 10 minutes idle -> screensaver
     private static final long TV_SLEEP_TIMEOUT_MS = SCREENSAVER_TIMEOUT_MS + (2L * 60 * 60 * 1000L); // 2 hours later -> TV off
@@ -1061,6 +1091,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     /** Shows the next picture from the wallpapers folder; the position survives restarts. */
     private void showNextWallpaper(boolean fade) {
+        if (appWallActive) return;
         if (wallpapers == null || wallpapers.isEmpty()) return;
         android.content.SharedPreferences prefs = getSharedPreferences("wallpaper", MODE_PRIVATE);
         int last = prefs.getInt("index", -1);
@@ -1560,7 +1591,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             // Below the dock there is no shelf, but the glow still takes this app's colour, so every
             // tile lights the room the same way the dock does.
             hideShelf();
-            showAmbient(adapter.ambientColorAt(position));
+            showAmbient(adapter.ambientColorAt(position)); applyAppWallpaper(adapter.pkgAt(position));
             // Scroll just enough so the whole glass (not only the tile) is visible.
             showRect.set(0, -(int) pad * 2, item.getWidth(), item.getHeight() + (int) pad);
             grid.requestChildRectangleOnScreen(item, showRect, reducedMotion);
@@ -1584,6 +1615,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void showHero(int position, float dockTopInRoot) {
         int color = adapter.ambientColorAt(position);
+        applyAppWallpaper(adapter.pkgAt(position));
         heroBottom = dockTopInRoot - HERO_GAP_DP * density;
 
         if (islamicShelf != null) {
