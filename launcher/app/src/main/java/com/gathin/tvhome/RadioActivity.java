@@ -181,7 +181,6 @@ public class RadioActivity extends Activity {
         if (a != null && !a.isDestroyed()) a.status.setText(msg);
     }
 
-EOFcat >> ~/glass-tv-home/launcher/app/src/main/java/com/gathin/tvhome/RadioActivity.java <<'EOF'
     private View row(String main, String sub, View.OnClickListener click) {
         LinearLayout r = new LinearLayout(this);
         r.setOrientation(LinearLayout.VERTICAL);
