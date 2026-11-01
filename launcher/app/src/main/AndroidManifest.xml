@@ -46,6 +46,7 @@
     </queries>
 
     <application
+        android:usesCleartextTraffic="true"
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:banner="@drawable/banner"
@@ -202,6 +203,12 @@
         <activity
             android:name=".ManUtdActivity"
             android:label="Man United"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.TvHome" />
+        <activity
+            android:name=".RadioActivity"
+            android:label="Radio"
             android:exported="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.TvHome" />
